@@ -1,0 +1,13 @@
+{
+	auto_https off
+	order cgi last
+}
+
+http://localhost {
+  handle /ecowitt-weather {
+	  cgi * /usr/local/cgi-bin/ecowitt-handler
+	}
+	handle {
+	  respond 403
+	}
+}

@@ -1,0 +1,8 @@
+ mkdir -p caddy-data
+ docker run -ti --rm \
+   -p 80:80 \
+   -v $PWD/Caddyfile:/etc/caddy/Caddyfile \
+   -v $PWD/caddy-data:/data \
+   -v $PWD/cgi-bin:/usr/local/cgi-bin \
+   samrees/caddy-bauble \
+   caddy run -config /etc/caddy/Caddyfile -watch
