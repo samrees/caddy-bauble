@@ -5,7 +5,9 @@
 
 http://localhost {
   handle /ecowitt-weather {
-	  cgi * /usr/local/cgi-bin/ecowitt-handler
+	  cgi * /usr/local/cgi-bin/ecowitt-handler {
+	    inspect
+	  }
 	}
 	handle {
 	  respond 403
