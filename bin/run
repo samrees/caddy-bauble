@@ -4,5 +4,11 @@
    -v $PWD/Caddyfile:/etc/caddy/Caddyfile \
    -v $PWD/caddy-data:/data \
    -v $PWD/cgi-bin:/usr/local/cgi-bin \
+   -e PGHOST \
+   -e PGPORT \
+   -e PGUSER \
+   -e PGPASSWORD \
+   -e PGDATABASE \
+   --name caddy-bauble \
    samrees/caddy-bauble \
    caddy run -config /etc/caddy/Caddyfile -watch

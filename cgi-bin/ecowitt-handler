@@ -1,6 +1,46 @@
 #!/usr/bin/env ruby
 
+require 'pg'
+
+id_to_location = {
+  "in" => "main_room",
+  "1" => "guest_bedroom"
+}
+
 puts "Content-type: text/plain\n\n"
+
+if ENV['REQUEST_METHOD'] == 'POST'
+  last_post = ARGF.read
+  File.open('last_post', 'w') { |file| file.write(last_post) }
+
+  entries =
+    last_post
+    .scan(/(temp|humidity|batt)([^fc=]*)f?c?=([^\&]+)/)
+    .reduce(Hash.new{|hash,key| hash[key] = {}}) do |a,r|
+      a[r[1]][r[0]] = r[2]; a
+    end
+  File.open('last_entries', 'w') { |file| file.write(entries) }
+
+  sql = "INSERT INTO ecowitt_th(time, location, temperature, humidity, battery) VALUES"
+  sql_values = entries.map do |k,v|
+    if id_to_location.has_key?(k)
+      "(NOW(),'#{id_to_location[k]}', #{v['temp'] || 'NULL'}, #{v['humidity'] || 'NULL'}, #{v['batt'] || 'NULL'})"
+    end
+  end.compact.join(",\n")
+  combined_sql = sql + "\n" + sql_values
+  File.open('last_sql_write', 'w') { |file| file.write(combined_sql) }
+
+  db = PG.connect(host: ENV['PGHOST'], port: ENV['PGPORT'], user: ENV['PGUSER'], password: ENV['PGPASSWORD'], dbname: ENV['PGDATABASE'])
+  db.exec(combined_sql)
+end
+
+if ENV['REQUEST_METHOD'] == 'GET'
+  Dir.glob('*').each do |f|
+    puts "--FILE: #{f}"
+    File.open(f,'r') { |file| puts file.read }
+    puts
+  end
+end
 
 
 exit 0

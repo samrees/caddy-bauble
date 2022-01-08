@@ -3,13 +3,14 @@
 	order cgi last
 }
 
-http://localhost {
-  handle /ecowitt-weather {
-	  cgi * /usr/local/cgi-bin/ecowitt-handler {
-	    inspect
-	  }
+http:// {
+	handle /ecowitt-weather {
+		cgi * /usr/local/cgi-bin/ecowitt-handler {
+			dir /tmp/cgi-scratch
+			pass_env PGHOST PGUSER PGPASSWORD PGDATABASE PGPORT HOME GEM_HOME
+		}
 	}
 	handle {
-	  respond 403
+		respond 403
 	}
 }
