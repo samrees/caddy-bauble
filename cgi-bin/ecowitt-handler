@@ -4,7 +4,14 @@ require 'pg'
 
 id_to_location = {
   "in" => "main_room",
-  "1" => "guest_bedroom"
+  "1"  => "guest_bedroom",
+  "2"  => "nw_main_room",
+  "3"  => "sw_main_room",
+  "4"  => "office",
+  "5"  => "master_bath",
+  "6"  => "master_bedroom",
+  "7"  => "back_door",
+  "8"  => "shop"
 }
 
 puts "Content-type: text/plain\n\n"
