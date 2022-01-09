@@ -32,9 +32,14 @@ if ENV['REQUEST_METHOD'] == 'POST'
 
   db = PG.connect(host: ENV['PGHOST'], port: ENV['PGPORT'], user: ENV['PGUSER'], password: ENV['PGPASSWORD'], dbname: ENV['PGDATABASE'])
   db.exec(combined_sql)
+
+  puts "OK"
 end
 
 if ENV['REQUEST_METHOD'] == 'GET'
+
+  puts "Current temporary file list is as follows:"
+
   Dir.glob('*').each do |f|
     puts "--FILE: #{f}"
     File.open(f,'r') { |file| puts file.read }
