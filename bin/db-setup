@@ -17,6 +17,35 @@ CREATE TABLE IF NOT EXISTS ecowitt_th (
 
 SELECT create_hypertable('ecowitt_th', 'time');
 
+CREATE TABLE IF NOT EXISTS ecowitt_weather (
+  time            TIMESTAMPTZ       NOT NULL,
+  temperature     DOUBLE PRECISION  NULL,
+  humidity        DOUBLE PRECISION  NULL,
+  battery         INTEGER           NULL,
+  wind_direction  INTEGER           NULL,
+  wind_speed      DOUBLE PRECISION  NULL,
+  wind_gust       DOUBLE PRECISION  NULL,
+  solar_radiation DOUBLE PRECISION  NULL,
+  uv              INTEGER           NULL,
+  rain_rate       DOUBLE PRECISION  NULL,
+  pressure        DOUBLE PRECISION  NULL
+);
+
+SELECT create_hypertable('ecowitt_weather', 'time');
+
+CREATE TABLE IF NOT EXISTS ecowitt_accumulate (
+  time            TIMESTAMPTZ       NOT NULL,
+  max_daily_gust  DOUBLE PRECISION  NULL,
+  event_rain      DOUBLE PRECISION  NULL,
+  hourly_rain     DOUBLE PRECISION  NULL,
+  daily_rain      DOUBLE PRECISION  NULL,
+  weekly_rain     DOUBLE PRECISION  NULL,
+  monthly_rain    DOUBLE PRECISION  NULL,
+  yearly_rain     DOUBLE PRECISION  NULL,
+  total_rain      DOUBLE PRECISION  NULL
+);
+
+SELECT create_hypertable('ecowitt_accumulate', 'time');
 EoSQL
 }
 

@@ -1,44 +1,80 @@
 #!/usr/bin/env ruby
 
 require 'pg'
+require 'time'
+require 'fileutils'
 
-id_to_location = {
-  "in" => "main_room",
-  "1"  => "guest_bedroom",
-  "2"  => "nw_main_room",
-  "3"  => "sw_main_room",
-  "4"  => "office",
-  "5"  => "master_bath",
-  "6"  => "master_bedroom",
-  "7"  => "back_door",
-  "8"  => "shop"
-}
+def th_sql(entries)
+  id_to_location = {
+    "in" => "main_room",
+    "1"  => "guest_bedroom",
+    "2"  => "nw_main_room",
+    "3"  => "sw_main_room",
+    "4"  => "office",
+    "5"  => "master_bath",
+    "6"  => "master_bedroom",
+    "7"  => "back_door",
+    "8"  => "shop"
+  }
+
+  extracted_th = id_to_location.keys.map do |id|
+    [
+      id_to_location[id],
+      {
+        "temp"     => entries["temp#{id}f"],
+        "humidity" => entries["humidity#{id}"],
+        "batt"     => entries["batt#{id}"]
+      }
+    ]
+  end.to_h
+
+  sql = "INSERT INTO ecowitt_th(time, location, temperature, humidity, battery) VALUES"
+  sql_values = extracted_th.map do |k,v|
+    "(NOW(), \'#{k}\', #{v['temp'] || 'NULL'}, #{v['humidity'] || 'NULL'}, #{v['batt'] || 'NULL'})"
+  end.compact.join(",\n")
+
+  sql + "\n" + sql_values
+end
+
+def weather_sql(entries)
+  sql = "INSERT INTO ecowitt_weather(time, temperature, humidity, battery, wind_direction, wind_speed, wind_gust, solar_radiation, uv, rain_rate, pressure) VALUES"
+  sql_data = [
+    entries['tempf'],
+    entries['humidity'],
+    entries['wh65batt'],
+    entries['winddir'],
+    entries['windspeedmph'],
+    entries['windgustmph'],
+    entries['solarradiation'],
+    entries['uv'],
+    entries['rainratein'],
+    entries['baromabsin']
+  ]
+  sql_values = "(NOW(), #{sql_data.join(",")})"
+  sql + "\n" + sql_values
+end
 
 puts "Content-type: text/plain\n\n"
 
 if ENV['REQUEST_METHOD'] == 'POST'
-  last_post = ARGF.read
-  File.open('last_post', 'w') { |file| file.write(last_post) }
+  post = ARGF.read
+  File.open('post', 'w') { |file| file.write(post) }
+  File.open('last_post_time', 'w') { |file| file.write(Time.now.iso8601 + "\n") }
 
   entries =
-    last_post
-    .scan(/(temp|humidity|batt)([^fc=]*)f?c?=([^\&]+)/)
-    .reduce(Hash.new{|hash,key| hash[key] = {}}) do |a,r|
-      a[r[1]][r[0]] = r[2]; a
+    post
+    .split('&')
+    .reduce({}) do |a,e|
+      r = e.split('=')
+      a[r[0]] = r[1]
+      a
     end
-  File.open('last_entries', 'w') { |file| file.write(entries) }
-
-  sql = "INSERT INTO ecowitt_th(time, location, temperature, humidity, battery) VALUES"
-  sql_values = entries.map do |k,v|
-    if id_to_location.has_key?(k)
-      "(NOW(),'#{id_to_location[k]}', #{v['temp'] || 'NULL'}, #{v['humidity'] || 'NULL'}, #{v['batt'] || 'NULL'})"
-    end
-  end.compact.join(",\n")
-  combined_sql = sql + "\n" + sql_values
-  File.open('last_sql_write', 'w') { |file| file.write(combined_sql) }
+  File.open('entries', 'w') { |file| file.write(entries) }
 
   db = PG.connect(host: ENV['PGHOST'], port: ENV['PGPORT'], user: ENV['PGUSER'], password: ENV['PGPASSWORD'], dbname: ENV['PGDATABASE'])
-  db.exec(combined_sql)
+  File.open('testing_data', 'w') { |file| file.write(th_sql(entries)) }
+  db.exec(th_sql(entries))
+  db.exec(weather_sql(entries))
 
   puts "OK"
 end
@@ -46,6 +82,7 @@ end
 if ENV['REQUEST_METHOD'] == 'GET'
 
   puts "Current temporary file list is as follows:"
+  # FileUtils.rm_rf Dir.glob("*")
 
   Dir.glob('*').each do |f|
     puts "--FILE: #{f}"
@@ -53,6 +90,5 @@ if ENV['REQUEST_METHOD'] == 'GET'
     puts
   end
 end
-
 
 exit 0
